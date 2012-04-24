@@ -2,7 +2,8 @@
 
 (asdf:defsystem #:pavol
   :serial t
-  :depends-on (#:stumpwm)
+  :depends-on (#:stumpwm
+               #:cl-ppcre)
   :components ((:file "package")
                (:file "pavol")))
 
