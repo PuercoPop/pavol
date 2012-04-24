@@ -38,7 +38,7 @@
 (defun pavol-show-volume-bar ()
   (let ((percent (pavol-volume)))
     (stumpwm:message
-     (stumpwm:concat
+     (concatenate 'string
       (format nil "~:[OPEN~;MUTED~]" (pavol-mute-p))
       (format nil "~C^B~A%" #\Newline percent) "^b [^[^7*"
       (stumpwm::bar percent 50 #\# #\:) "^]]"))))
