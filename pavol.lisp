@@ -8,7 +8,7 @@
 
 (defun pavol-volume ()
   (let ((str-sinks
-         (run-shell-command "pacmd list-sinks" t)))
+         (stumpwm:run-shell-command "pacmd list-sinks" t)))
     (multiple-value-bind (start end start-reg end-reg)
         (cl-ppcre:scan "volume: 0:(.*?)%" str-sinks)
       (declare (ignore start end))
@@ -16,7 +16,7 @@
 
 (defun pavol-mute-p ()
   (let ((str-sinks
-         (run-shell-command "pacmd list-sinks" t)))
+         (stumpwm:run-shell-command "pacmd list-sinks" t)))
     (multiple-value-bind (start end start-reg end-reg)
         (cl-ppcre:scan "muted: (.*)" str-sinks)
       (declare (ignore start end))
@@ -27,18 +27,18 @@
     r))
 
 (defun pavol-set-volume (percentage)
-  (run-shell-command
+  (stumpwm:run-shell-command
    (format nil "pacmd set-sink-volume 0 ~a"
            (pavol-percentage->integer percentage))))
 
 (defun pavol-mute (state)
-  (run-shell-command
+  (stumpwm:run-shell-command
    (format nil "pacmd set-sink-mute 0 ~a" (if state 1 0))))
 
 (defun pavol-show-volume-bar ()
   (let ((percent (pavol-volume)))
-    (message
-     (concat
+    (stumpwm:message
+     (stumpwm:concat
       (format nil "~:[OPEN~;MUTED~]" (pavol-mute-p))
       (format nil "~C^B~A%" #\Newline percent) "^b [^[^7*"
       (stumpwm::bar percent 50 #\# #\:) "^]]"))))
