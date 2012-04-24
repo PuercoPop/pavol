@@ -72,3 +72,17 @@
       (pavol-mute nil)
       (pavol-mute t))
   (pavol-show-volume-bar))
+
+(in-package #:stumpwm)
+
+(stumpwm:defcommand pavol-vol+ () ()
+  "Increase the volume by 5 points"
+  (pavol:vol+ 5))
+
+(stumpwm:defcommand pavol-vol- () ()
+  "Decrease the volume by 5 points"
+  (pavol:vol- 5))
+
+(stumpwm:defcommand pavol-toggle-mute () ()
+  "Toggle mute"
+  (pavol:toggle-mute))
