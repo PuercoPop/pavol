@@ -1,5 +1,5 @@
 ;;;; package.lisp
 
 (defpackage #:pavol
-  (:use #:cl))
+  (:use #:cl #:stumpwm))
 
