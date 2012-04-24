@@ -41,7 +41,7 @@
      (concat
       (format nil "~:[OPEN~;MUTED~]" (pavol-mute-p))
       (format nil "~C^B~A%" #\Newline percent) "^b [^[^7*"
-      (bar percent 50 #\# #\:) "^]]"))))
+      (stumpwm::bar percent 50 #\# #\:) "^]]"))))
 
 (defun pavol-volume-up (percentage)
   (let ((new-percentage
@@ -59,28 +59,15 @@
                (- cur percentage)))))
     (pavol-set-volume new-percentage)))
 
-(defcommand pavol-volume-3+ () ()
-  "Up volume"
-  (pavol-volume-up 3)
+(defun vol+ (percentage)
+  (pavol-volume-up percentage)
   (pavol-show-volume-bar))
 
-(defcommand pavol-volume-3- () ()
-  "Down volume"
-  (pavol-volume-down 3)
+(defun vol- (percentage)
+  (pavol-volume-down percentage)
   (pavol-show-volume-bar))
 
-(defcommand pavol-volume-5+ () ()
-  "Up volume"
-  (pavol-volume-up 5)
-  (pavol-show-volume-bar))
-
-(defcommand pavol-volume-5- () ()
-  "Down volume"
-  (pavol-volume-down 5)
-  (pavol-show-volume-bar))
-
-(defcommand pavol-mute-cmd () ()
-  "Mute"
+(defun toggle-mute ()
   (if (pavol-mute-p)
       (pavol-mute nil)
       (pavol-mute t))
