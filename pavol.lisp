@@ -23,8 +23,7 @@
       (string= "yes" (subseq str-sinks (elt start-reg 0) (elt end-reg 0))))))
 
 (defun percentage->integer (percentage)
-  (let ((r (truncate (* *pavol-max* percentage) 100)))
-    r))
+  (truncate (* *pavol-max* percentage) 100))
 
 (defun set-volume (percentage)
   (stumpwm:run-shell-command
