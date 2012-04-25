@@ -53,20 +53,10 @@
              (mutep) percent (stumpwm::bar percent 50 #\# #\:)))))
 
 (defun volume-up (percentage)
-  (let ((new-percentage
-         (let ((cur (volume)))
-           (if (> (+ cur percentage) 100)
-               100
-               (+ cur percentage)))))
-    (set-volume new-percentage)))
+  (set-volume (min (+ (volume) percentage) 100)))
 
 (defun volume-down (percentage)
-  (let ((new-percentage
-         (let ((cur (volume)))
-           (if (< (- cur percentage) 0)
-               0
-               (- cur percentage)))))
-    (set-volume new-percentage)))
+  (set-volume (max (- (volume) percentage) 0)))
 
 (defun vol+ (percentage)
   (volume-up percentage)
