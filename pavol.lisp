@@ -93,9 +93,5 @@
 
 (defcommand pavol-interactive () ()
   "Change the volume interactively using `j', `k' and `m' keys"
-  (message "Changing volume interactively")
+  (pavol:show-volume-bar)
   (push-top-map pavol:*pavol-keymap*))
-
-
-
-

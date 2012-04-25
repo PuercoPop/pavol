@@ -5,5 +5,6 @@
   (:export :vol+
            :vol-
            :toggle-mute
+           :show-volume-bar
            :*pavol-keymap*))
 
