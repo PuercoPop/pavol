@@ -6,6 +6,18 @@
 
 (defparameter *pavol-max* 65536)
 
+(defparameter *pavol-keymap*
+  (let ((m (stumpwm:make-sparse-keymap)))
+    (labels ((dk (k c)
+               (stumpwm:define-key m k c)))
+      (dk (stumpwm:kbd "j") "pavol-vol-")
+      (dk (stumpwm:kbd "k") "pavol-vol+")
+      (dk (stumpwm:kbd "m") "pavol-toggle-mute")
+      (dk (stumpwm:kbd "RET") "pavol-exit-interactive")
+      (dk (stumpwm:kbd "C-g") "pavol-exit-interactive")
+      (dk (stumpwm:kbd "ESC") "pavol-exit-interactive")
+      m)))
+
 (defun volume ()
   (let ((str-sinks
          (stumpwm:run-shell-command "pacmd list-sinks" t)))
@@ -85,3 +97,17 @@
 (defcommand pavol-toggle-mute () ()
   "Toggle mute"
   (pavol:toggle-mute))
+
+(defcommand pavol-exit-interactive () ()
+  "Exit the interactive mode for changing the volume"
+  (pop-top-map)
+  (message "Done changing volume"))
+
+(defcommand pavol-interactive () ()
+  "Change the volume interactively using `j', `k' and `m' keys"
+  (message "Changing volume interactively")
+  (push-top-map pavol:*pavol-keymap*))
+
+
+
+

@@ -4,5 +4,6 @@
   (:use #:cl)
   (:export :vol+
            :vol-
-           :toggle-mute))
+           :toggle-mute
+           :*pavol-keymap*))
 
