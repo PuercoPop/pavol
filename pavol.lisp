@@ -49,10 +49,8 @@
 (defun show-volume-bar ()
   (let ((percent (volume)))
     (stumpwm:message
-     (concatenate 'string
-      (format nil "~:[OPEN~;MUTED~]" (mutep))
-      (format nil "~C^B~A%" #\Newline percent) "^b [^[^7*"
-      (stumpwm::bar percent 50 #\# #\:) "^]]"))))
+     (format nil "~:[OPEN~;MUTED~]~%^B~A%^b [^[^7*~a^]]"
+             (mutep) percent (stumpwm::bar percent 50 #\# #\:)))))
 
 (defun volume-up (percentage)
   (let ((new-percentage
