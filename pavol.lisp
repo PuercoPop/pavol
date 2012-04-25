@@ -44,7 +44,7 @@
 
 (defun mute (state)
   (stumpwm:run-shell-command
-   (format nil "pacmd set-sink-mute 0 ~a" (if state 1 0))))
+   (format nil "pacmd set-sink-mute 0 ~:[0~;1~]" state)))
 
 (defun show-volume-bar ()
   (let ((percent (volume)))
