@@ -48,7 +48,9 @@
 
 (defun show-volume-bar ()
   (let ((percent (volume)))
-    (stumpwm:message
+    (funcall (if (equal stumpwm:*top-map* pavol:*pavol-keymap*)
+         #'stumpwm::message-no-timeout
+         #'stumpwm:message)
      (format nil "~:[OPEN~;MUTED~]~%^B~3d%^b [^[^7*~a^]]"
              (mutep) percent (stumpwm::bar percent 50 #\# #\:)))))
 
@@ -92,5 +94,5 @@
 
 (defcommand pavol-interactive () ()
   "Change the volume interactively using `j', `k' and `m' keys"
-  (pavol:show-volume-bar)
-  (push-top-map pavol:*pavol-keymap*))
+  (push-top-map pavol:*pavol-keymap*)
+  (pavol:show-volume-bar))
