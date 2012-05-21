@@ -46,13 +46,22 @@
   (stumpwm:run-shell-command
    (format nil "pacmd set-sink-mute 0 ~:[0~;1~]" state)))
 
+(defun set-interactive ()
+  (stumpwm::push-top-map pavol:*pavol-keymap*))
+
+(defun unset-interactive ()
+  (stumpwm::pop-top-map))
+
+(defun interactivep ()
+  (equal stumpwm:*top-map* pavol:*pavol-keymap*))
+
 (defun show-volume-bar ()
   (let ((percent (volume)))
-    (funcall (if (equal stumpwm:*top-map* pavol:*pavol-keymap*)
-         #'stumpwm::message-no-timeout
-         #'stumpwm:message)
-     (format nil "~:[OPEN~;MUTED~]~%^B~3d%^b [^[^7*~a^]]"
-             (mutep) percent (stumpwm::bar percent 50 #\# #\:)))))
+    (funcall (if (interactivep)
+                 #'stumpwm::message-no-timeout
+                 #'stumpwm:message)
+             (format nil "~:[OPEN~;MUTED~]~%^B~3d%^b [^[^7*~a^]]"
+                     (mutep) percent (stumpwm::bar percent 50 #\# #\:)))))
 
 (defun volume-up (percentage)
   (set-volume (min (+ (volume) percentage) 100)))
@@ -90,9 +99,9 @@
 
 (defcommand pavol-exit-interactive () ()
   "Exit the interactive mode for changing the volume"
-  (pop-top-map))
+  (pavol:unset-interactive))
 
 (defcommand pavol-interactive () ()
   "Change the volume interactively using `j', `k' and `m' keys"
-  (push-top-map pavol:*pavol-keymap*)
+  (pavol:set-interactive)
   (pavol:show-volume-bar))

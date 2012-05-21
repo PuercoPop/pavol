@@ -6,5 +6,7 @@
            :vol-
            :toggle-mute
            :show-volume-bar
-           :*pavol-keymap*))
+           :*pavol-keymap*
+           :set-interactive
+           :unset-interactive))
 
