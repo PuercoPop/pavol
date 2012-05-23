@@ -57,7 +57,6 @@ Table of Contents
 
 
 
-  (load "/path/to/pavol/package.lisp")
   (load "/path/to/pavol/pavol.lisp")
 
 

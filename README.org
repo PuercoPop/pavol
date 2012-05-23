@@ -33,7 +33,6 @@
    Insert in your `.stumpwmrc', changing `/path/to/pavol' appropriately:
 
    #+begin_src lisp
-     (load "/path/to/pavol/package.lisp")
      (load "/path/to/pavol/pavol.lisp")
    #+end_src
 
