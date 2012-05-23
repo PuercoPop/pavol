@@ -1,5 +1,15 @@
 ;;;; pavol.lisp
 
+(defpackage #:pavol
+  (:use #:cl)
+  (:export :vol+
+           :vol-
+           :toggle-mute
+           :show-volume-bar
+           :*pavol-keymap*
+           :set-interactive
+           :unset-interactive))
+
 (in-package #:pavol)
 
 ;;; "pavol" goes here. Hacks and glory await!

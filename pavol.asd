@@ -8,6 +8,5 @@
   :serial t
   :depends-on (#:stumpwm
                #:cl-ppcre)
-  :components ((:file "package")
-               (:file "pavol")))
+  :components ((:file "pavol")))
 
