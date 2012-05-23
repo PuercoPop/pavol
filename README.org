@@ -3,4 +3,74 @@
   pavol is a very simple module to interact with pulseaudio.
 
   This module doesn't intent to substitute complex programs like
-  pavucontrol, but just allow a very primitive control over one sink.
+  pavucontrol but just allow a very primitive control over one sink.
+
+* Install
+
+  For the possible methods to load pavol, two of them are listed
+  below.
+
+** Quicklisp
+
+   Make the directory accessible to Quicklisp. There are various ways
+   to do it, so read [[http://www.quicklisp.org/][Quicklisp]]'s page. As in <2012-05-22 Tue>, the
+   easiest way is to create a directory under
+   `~/quicklisp/local-projects', like
+   `~/quicklisp/local-projects/pavol' and put pavol's files there.
+
+   After making the directory accessible to Quicklisp, insert in your
+   `.stumpwmrc' file:
+
+   #+begin_src lisp
+     (ql:quicklisp "pavol")
+   #+end_src
+
+** Loading
+
+   Insert in your `.stumpwmrc', changing `/path/to/pavol' appropriately:
+
+   #+begin_src lisp
+     (load "/path/to/pavol/package.lisp")
+     (load "/path/to/pavol/pavol.lisp")
+   #+end_src
+
+* Usage
+
+  Five commands are defined:
+
+  + pavol-vol+
+  + pavol-vol-
+  + pavol-toggle-mute
+  + pavol-interactive
+  + pavol-exit-interactive
+
+  The first three commands are supposed to be used using multimedia
+  keys. For this, you have to assign the appropriate keys in your
+  `.stumpwmrc'. For example:
+
+  #+begin_src lisp
+    (define-key stumpwm:*top-map* (stumpwm:kbd "XF86AudioRaiseVolume") "pavol-vol+")
+  #+end_src
+
+  The fourth command can be used if you don't have or don't want to
+  use the media keys. Once executed, you can use `j', `k' and `m' keys
+  to control the volume and exit the interactive mode using `ESC',
+  `RET' or `C-g'.
+
+* Limitations
+
+  As stated before, pavol is a *very* simple module to control a
+  single sink.
+
+  So, if you have more than one sink, it'll probably fail to control
+  your volume, without any warning.
+
+  PulseAudio is a complex system, but pavol will only let you do three
+  things:
+
+  + Increase volume
+  + Decrease volume
+  + Mute volume
+    
+  You'll also not be able to control individual applications. It's all
+  or nothing.
