@@ -112,13 +112,17 @@
 (defun interactivep ()
   (equal stumpwm:*top-map* pavol:*pavol-keymap*))
 
+(defun make-volume-bar (mute-p percent)
+  "Return a string that represents a volume bar"
+  (format nil "~:[OPEN~;MUTED~]~%^B~3d%^b [^[^7*~a^]]"
+          mute-p percent (stumpwm::bar percent 50 #\# #\:)))
+
 (defun show-volume-bar ()
   (let ((percent (volume)))
     (funcall (if (interactivep)
                  #'stumpwm::message-no-timeout
                  #'stumpwm:message)
-             (format nil "~:[OPEN~;MUTED~]~%^B~3d%^b [^[^7*~a^]]"
-                     (mutep) percent (stumpwm::bar percent 50 #\# #\:)))))
+             (make-volume-bar (mutep) percent))))
 
 (defun volume-up (percentage)
   (set-volume (min (+ (volume) percentage) 100)))
