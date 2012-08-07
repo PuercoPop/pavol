@@ -28,6 +28,53 @@
       (dk (stumpwm:kbd "ESC") "pavol-exit-interactive")
       m)))
 
+(defstruct sink-input "A sink input"
+  (mute-p nil)
+  name
+  index
+  volume)
+
+(defun sink-input-index-mute-p (sink-input-index)
+  "Is the sink input mute?"
+  (ppcre:register-groups-bind (state)
+      ("\\ *muted:\\ *(\\w*)" sink-input-index)
+    (not (string= state "no"))))
+
+(defun sink-input-index-name (sink-input-index)
+  "The application name of the sinput index."
+  (ppcre:register-groups-bind (name)
+      ("\\ *application.name = (.*)" sink-input-index)
+    (subseq name 1 (1- (length name)))))
+
+(defun sink-input-index-index (sink-input-index)
+  "The index os a sink input."
+  (cl-ppcre:register-groups-bind (index)
+      ("\\ *index: (\\d*)" sink-input-index)
+    (when index (parse-integer index))))
+
+(defun sink-input-index-volume (sink-input-index)
+  "The volume of a sink input."
+  (cl-ppcre:register-groups-bind (volume)
+      ("\\ *volume:\\ *0:\\ *(\\d*)\\ *%" sink-input-index)
+    (when volume (parse-integer volume))))
+
+(defun process-sink-input-index (sink-input-index)
+  "Return a sink input structure from a index returned by pacmd."
+  (make-sink-input
+   :mute-p (sink-input-index-mute-p sink-input-index)
+   :name (sink-input-index-name sink-input-index)
+   :index (sink-input-index-index sink-input-index)
+   :volume (sink-input-index-volume sink-input-index)))
+
+(defun list-sink-inputs ()
+  "A list of the active sink inputs."
+  (let ((sink-inputs nil))
+    (cl-ppcre:do-matches-as-strings 
+        (match "(?s:index:.+?(?=index:|>>>))"
+          (stumpwm:run-shell-command "pacmd list-sink-inputs" t))
+      (push (process-sink-input-index match) sink-inputs))
+    sink-inputs))
+
 (defun volume ()
   (let ((str-sinks
          (stumpwm:run-shell-command "pacmd list-sinks" t)))
