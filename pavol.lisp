@@ -205,8 +205,11 @@ muting a sink")
   "Give the ability to control independent applications.
 
 They are actually input sinks, using pulseaudio's terminology."
-  (let ((sink (select-from-menu (current-screen)
-                                (pavol:sink-inputs-selection))))
-    (when sink
-      (pavol:set-interactive (pavol:sink-input-index (cdr sink)))
-      (pavol:show-volume-bar))))
+  (let ((sinks (pavol:sink-inputs-selection)))
+    (if (null sinks)
+        (message "No application is running")
+        (let ((sink (select-from-menu (current-screen)
+                                      sinks)))
+          (when sink
+            (pavol:set-interactive (pavol:sink-input-index (cdr sink)))
+            (pavol:show-volume-bar))))))
