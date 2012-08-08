@@ -8,13 +8,18 @@
            :show-volume-bar
            :*pavol-keymap*
            :set-interactive
-           :unset-interactive))
+           :unset-interactive
+           :sink-inputs-selection
+           :sink-input-index))
 
 (in-package #:pavol)
 
 ;;; "pavol" goes here. Hacks and glory await!
 
 (defparameter *pavol-max* 65536)
+
+(defvar *pavol-index* 0 "The index used when changing the volume or
+muting a sink")
 
 (defparameter *pavol-keymap*
   (let ((m (stumpwm:make-sparse-keymap)))
@@ -75,63 +80,92 @@
       (push (process-sink-input-index match) sink-inputs))
     sink-inputs))
 
+(defun sink-input->alist (sink-input)
+  (cons (concatenate 'string
+                     (sink-input-name sink-input) " "
+                     (make-volume-bar (sink-input-volume sink-input)))
+        sink-input))
+
+(defun sink-inputs-selection ()
+  (mapcar #'sink-input->alist (list-sink-inputs)))
+
 (defun volume ()
-  (let ((str-sinks
-         (stumpwm:run-shell-command "pacmd list-sinks" t)))
-    (multiple-value-bind (start end start-reg end-reg)
-        (cl-ppcre:scan "volume: 0:(.*?)%" str-sinks)
-      (declare (ignore start end))
-      (parse-integer (subseq str-sinks (elt start-reg 0) (elt end-reg 0))))))
+  (if (zerop *pavol-index*)
+      (cl-ppcre:register-groups-bind (volume)
+          ("volume: 0:(.*?)%" (stumpwm:run-shell-command "pacmd list-sinks"
+                                                         t))
+        (when volume
+          (parse-integer volume)))
+      (sink-input-volume (find *pavol-index*
+                               (list-sink-inputs)
+                               :key #'sink-input-index))))
 
 (defun mutep ()
-  (let ((str-sinks
-         (stumpwm:run-shell-command "pacmd list-sinks" t)))
-    (multiple-value-bind (start end start-reg end-reg)
-        (cl-ppcre:scan "muted: (.*)" str-sinks)
-      (declare (ignore start end))
-      (string= "yes" (subseq str-sinks (elt start-reg 0) (elt end-reg 0))))))
+    (if (zerop *pavol-index*)
+        (cl-ppcre:register-groups-bind (mutep)
+            ("muted: (.*)" (stumpwm:run-shell-command "pacmd list-sinks"
+                                                      t))
+          (when mutep
+            (string= "yes" mutep)))
+        (sink-input-mute-p (find *pavol-index*
+                                 (list-sink-inputs)
+                                 :key #'sink-input-index))))
 
 (defun percentage->integer (percentage)
   (truncate (* *pavol-max* percentage) 100))
 
 (defun set-volume (percentage)
-  (stumpwm:run-shell-command
-   (format nil "pacmd set-sink-volume 0 ~a"
-           (percentage->integer percentage))))
+  (if (zerop *pavol-index*)
+      (stumpwm:run-shell-command 
+       (format nil "pacmd set-sink-volume 0 ~a"
+               (percentage->integer percentage)))
+      (stumpwm:run-shell-command
+       (format nil "pacmd set-sink-input-volume ~a ~a"
+               *pavol-index*
+               (percentage->integer percentage)))))
 
 (defun mute (state)
-  (stumpwm:run-shell-command
-   (format nil "pacmd set-sink-mute 0 ~:[0~;1~]" state)))
+  (if (zerop *pavol-index*)
+      (stumpwm:run-shell-command
+       (format nil "pacmd set-sink-mute 0 ~:[0~;1~]" state))
+      (stumpwm:run-shell-command
+       (format nil
+               "pacmd set-sink-input-mute ~a ~:[0~;1~]"
+               *pavol-index*
+               state))))
 
-(defun set-interactive ()
+(defun set-interactive (&optional (index 0))
+  (setf *pavol-index* index)
   (stumpwm::push-top-map pavol:*pavol-keymap*))
 
 (defun unset-interactive ()
+  (setf *pavol-index* 0)
   (stumpwm::pop-top-map))
 
 (defun interactivep ()
   (equal stumpwm:*top-map* pavol:*pavol-keymap*))
 
-(defun make-volume-bar (mute-p percent)
+(defun make-volume-bar (percent)
   "Return a string that represents a volume bar"
-  (format nil "~:[OPEN~;MUTED~]~%^B~3d%^b [^[^7*~a^]]"
-          mute-p percent (stumpwm::bar percent 50 #\# #\:)))
+  (format nil "^B~3d%^b [^[^7*~a^]]"
+          percent (stumpwm::bar percent 50 #\# #\:)))
 
 (defun show-volume-bar ()
   (let ((percent (volume)))
     (funcall (if (interactivep)
                  #'stumpwm::message-no-timeout
                  #'stumpwm:message)
-             (make-volume-bar (mutep) percent))))
+             (format nil "~:[OPEN~;MUTED~]~%~a"
+                     (mutep) (make-volume-bar percent)))))
 
-(defun volume-up (percentage)
-  (set-volume (min (+ (volume) percentage) 100)))
+(defun volume-up (percentage) 
+ (set-volume (min (+ (volume) percentage) 100)))
 
 (defun volume-down (percentage)
   (set-volume (max (- (volume) percentage) 0)))
 
-(defun vol+ (percentage)
-  (volume-up percentage)
+(defun vol+ (percentage) 
+ (volume-up percentage)
   (show-volume-bar))
 
 (defun vol- (percentage)
@@ -162,7 +196,17 @@
   "Exit the interactive mode for changing the volume"
   (pavol:unset-interactive))
 
-(defcommand pavol-interactive () ()
+(defcommand pavol-interactive (&optional (index 0)) (:rest)
   "Change the volume interactively using `j', `k' and `m' keys"
-  (pavol:set-interactive)
+  (pavol:set-interactive (parse-integer index))
   (pavol:show-volume-bar))
+
+(defcommand pavol-application-list () ()
+  "Give the ability to control independent applications.
+
+They are actually input sinks, using pulseaudio's terminology."
+  (let ((sink (select-from-menu (current-screen)
+                                (pavol:sink-inputs-selection))))
+    (when sink
+      (pavol:set-interactive (pavol:sink-input-index (cdr sink)))
+      (pavol:show-volume-bar))))
