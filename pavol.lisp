@@ -204,7 +204,7 @@ muting a sink")
 (defcommand pavol-application-list () ()
   "Give the ability to control independent applications.
 
-They are actually input sinks, using pulseaudio's terminology."
+They are actually input sinks in pulseaudio's terminology."
   (let ((sinks (pavol:sink-inputs-selection)))
     (if (null sinks)
         (message "No application is running")
