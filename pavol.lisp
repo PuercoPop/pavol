@@ -10,7 +10,8 @@
            :set-interactive
            :unset-interactive
            :sink-inputs-selection
-           :sink-input-index))
+           :sink-input-index
+           :*pavol-application-list-keymap*))
 
 (in-package #:pavol)
 
@@ -38,6 +39,17 @@ muting a sink")
   name
   index
   volume)
+
+(defun copy-sparse-keymap (sparse-keymap)
+  (stumpwm::copy-kmap sparse-keymap))
+
+(defparameter *pavol-application-list-keymap*
+  (let ((m (copy-sparse-keymap stumpwm::*menu-map*)))
+    (labels ((dk (k c)
+               (stumpwm:define-key m k c)))
+      (dk (stumpwm:kbd "j") 'stumpwm::menu-down)
+      (dk (stumpwm:kbd "k") 'stumpwm::menu-up)
+      m)))
 
 (defun sink-input-index-mute-p (sink-input-index)
   "Is the sink input mute?"
@@ -208,8 +220,9 @@ They are actually input sinks in pulseaudio's terminology."
   (let ((sinks (pavol:sink-inputs-selection)))
     (if (null sinks)
         (message "No application is running")
-        (let ((sink (select-from-menu (current-screen)
-                                      sinks)))
+        (let* ((*menu-map* pavol:*pavol-application-list-keymap*)
+               (sink (select-from-menu (current-screen)
+                                       sinks)))
           (when sink
             (pavol:set-interactive (pavol:sink-input-index (cdr sink)))
             (pavol:show-volume-bar))))))
