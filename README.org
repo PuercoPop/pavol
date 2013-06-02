@@ -1,6 +1,3 @@
-#+TITLE: pavol
-#+OPTIONS: author:nil timestamp:nil
-
 * A pulseaudio module
 
   pavol is a very simple [[http://www.nongnu.org/stumpwm/][StumpWM]] module to interact with pulseaudio.
