@@ -11,6 +11,14 @@
   For the possible methods to load pavol, two of them are listed
   below.
 
+** Loading it directly
+
+   Insert in your `.stumpwmrc', changing `/path/to/pavol' appropriately:
+
+   #+begin_src lisp
+     (load "/path/to/pavol/pavol.lisp")
+   #+end_src
+
 ** Quicklisp
 
    Make the directory accessible to Quicklisp. There are various ways
@@ -24,14 +32,6 @@
 
    #+begin_src lisp
      (ql:quicklisp "pavol")
-   #+end_src
-
-** Loading it directly
-
-   Insert in your `.stumpwmrc', changing `/path/to/pavol' appropriately:
-
-   #+begin_src lisp
-     (load "/path/to/pavol/pavol.lisp")
    #+end_src
 
 * Usage
