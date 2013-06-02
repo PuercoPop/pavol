@@ -3,7 +3,7 @@
   pavol is a very simple [[http://www.nongnu.org/stumpwm/][StumpWM]] module to interact with pulseaudio.
 
   This module doesn't intent to substitute complex programs like
-  pavucontrol but just allow a very primitive control over one sink
+  [[http://freedesktop.org/software/pulseaudio/pavucontrol/][pavucontrol]] but just allow a very primitive control over one sink
   and applications.
 
 * Install
