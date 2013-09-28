@@ -208,9 +208,9 @@ muting a sink")
   "Exit the interactive mode for changing the volume"
   (pavol:unset-interactive))
 
-(defcommand pavol-interactive (&optional (index 0)) (:rest)
+(defcommand pavol-interactive () ()
   "Change the volume interactively using `j', `k' and `m' keys"
-  (pavol:set-interactive (parse-integer index))
+  (pavol:set-interactive)
   (pavol:show-volume-bar))
 
 (defcommand pavol-application-list () ()
