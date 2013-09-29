@@ -1,17 +1,7 @@
 ;;;; pavol.lisp
 
 (defpackage #:pavol
-  (:use #:cl)
-  (:export :vol+
-           :vol-
-           :toggle-mute
-           :show-volume-bar
-           :*pavol-keymap*
-           :set-interactive
-           :unset-interactive
-           :sink-inputs-selection
-           :sink-input-index
-           :*pavol-application-list-keymap*))
+  (:use #:cl))
 
 (in-package #:pavol)
 
@@ -148,14 +138,14 @@ muting a sink")
 
 (defun set-interactive (&optional (index 0))
   (setf *pavol-index* index)
-  (stumpwm::push-top-map pavol:*pavol-keymap*))
+  (stumpwm::push-top-map *pavol-keymap*))
 
 (defun unset-interactive ()
   (setf *pavol-index* 0)
   (stumpwm::pop-top-map))
 
 (defun interactivep ()
-  (equal stumpwm:*top-map* pavol:*pavol-keymap*))
+  (equal stumpwm:*top-map* *pavol-keymap*))
 
 (defun make-volume-bar (percent)
   "Return a string that represents a volume bar"
@@ -190,39 +180,37 @@ muting a sink")
       (mute t))
   (show-volume-bar))
 
-(in-package #:stumpwm)
-
-(defcommand pavol-vol+ () ()
+(stumpwm:defcommand pavol-vol+ () ()
   "Increase the volume by 5 points"
-  (pavol:vol+ 5))
+  (vol+ 5))
 
-(defcommand pavol-vol- () ()
+(stumpwm:defcommand pavol-vol- () ()
   "Decrease the volume by 5 points"
-  (pavol:vol- 5))
+  (vol- 5))
 
-(defcommand pavol-toggle-mute () ()
+(stumpwm:defcommand pavol-toggle-mute () ()
   "Toggle mute"
-  (pavol:toggle-mute))
+  (toggle-mute))
 
-(defcommand pavol-exit-interactive () ()
+(stumpwm:defcommand pavol-exit-interactive () ()
   "Exit the interactive mode for changing the volume"
-  (pavol:unset-interactive))
+  (unset-interactive))
 
-(defcommand pavol-interactive () ()
+(stumpwm:defcommand pavol-interactive () ()
   "Change the volume interactively using `j', `k' and `m' keys"
-  (pavol:set-interactive)
-  (pavol:show-volume-bar))
+  (set-interactive)
+  (show-volume-bar))
 
-(defcommand pavol-application-list () ()
+(stumpwm:defcommand pavol-application-list () ()
   "Give the ability to control independent applications.
 
 They are actually input sinks in pulseaudio's terminology."
-  (let ((sinks (pavol:sink-inputs-selection)))
+  (let ((sinks (sink-inputs-selection)))
     (if (null sinks)
-        (message "No application is running")
-        (let* ((*menu-map* pavol:*pavol-application-list-keymap*)
-               (sink (select-from-menu (current-screen)
-                                       sinks)))
+        (stumpwm:message "No application is running")
+        (let* ((stumpwm::*menu-map* *pavol-application-list-keymap*)
+               (sink (stumpwm::select-from-menu (stumpwm:current-screen)
+                                                sinks)))
           (when sink
-            (pavol:set-interactive (pavol:sink-input-index (cdr sink)))
-            (pavol:show-volume-bar))))))
+            (set-interactive (sink-input-index (cdr sink)))
+            (show-volume-bar))))))
