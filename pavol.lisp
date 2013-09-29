@@ -55,13 +55,13 @@ muting a sink")
 
 (defun sink-input-index-index (sink-input-index)
   "The index os a sink input."
-  (cl-ppcre:register-groups-bind (index)
+  (ppcre:register-groups-bind (index)
       ("\\ *index: (\\d*)" sink-input-index)
     (when index (parse-integer index))))
 
 (defun sink-input-index-volume (sink-input-index)
   "The volume of a sink input."
-  (cl-ppcre:register-groups-bind (volume)
+  (ppcre:register-groups-bind (volume)
       ("\\ *volume:\\ *0:\\ *(\\d*)\\ *%" sink-input-index)
     (when volume (parse-integer volume))))
 
@@ -76,7 +76,7 @@ muting a sink")
 (defun list-sink-inputs ()
   "A list of the active sink inputs."
   (let ((sink-inputs nil))
-    (cl-ppcre:do-matches-as-strings 
+    (ppcre:do-matches-as-strings
         (match "(?s:index:.+?(?=index:|>>>))"
           (stumpwm:run-shell-command "pacmd list-sink-inputs" t))
       (push (process-sink-input-index match) sink-inputs))
@@ -93,7 +93,7 @@ muting a sink")
 
 (defun volume ()
   (if (zerop *pavol-index*)
-      (cl-ppcre:register-groups-bind (volume)
+      (ppcre:register-groups-bind (volume)
           ("volume: 0:(.*?)%" (stumpwm:run-shell-command "pacmd list-sinks"
                                                          t))
         (when volume
@@ -104,7 +104,7 @@ muting a sink")
 
 (defun mutep ()
     (if (zerop *pavol-index*)
-        (cl-ppcre:register-groups-bind (mutep)
+        (ppcre:register-groups-bind (mutep)
             ("muted: (.*)" (stumpwm:run-shell-command "pacmd list-sinks"
                                                       t))
           (when mutep
