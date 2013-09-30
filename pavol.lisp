@@ -52,6 +52,13 @@
 ;;; Navigate the menu using `j' and `k' keys and select the desired
 ;;; application using `RET'.
 
+;;; Installation
+;;; ------------
+
+;;; Put this module inside your `contrib/' directory and load it with
+;;; either the command `load-module' or add (load-module "pavol") to
+;;; your `.stumpwmrc' file.
+
 ;;; Limitations
 ;;; -----------
 
