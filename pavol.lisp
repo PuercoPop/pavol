@@ -1,4 +1,72 @@
-;;;; pavol.lisp
+;;; pavol.lisp --- simple StumpWM module to interact with pulseaudio
+
+;;; Copyright (C) 2012-2013 Diogo F. S. Ramos
+
+;;; This program is free software: you can redistribute it and/or
+;;; modify it under the terms of the GNU General Public License as
+;;; published by the Free Software Foundation, either version 3 of the
+;;; License, or (at your option) any later version.
+
+;;; This program is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;;; General Public License for more details.
+
+;;; You should have received a copy of the GNU General Public License
+;;; along with this program.  If not, see
+;;; <http://www.gnu.org/licenses/>.
+
+;;;; Commentary:
+
+;;; This module doesn't intent to substitute complex programs like
+;;; pavucontrol but allow a very primitive control over one sink and
+;;; applications.
+
+;;; Usage
+;;; -----
+
+;;; The following commands are defined:
+
+;;; + pavol-vol+
+;;; + pavol-vol-
+;;; + pavol-toggle-mute
+;;; + pavol-interactive
+;;; + pavol-exit-interactive
+;;; + pavol-application-list
+
+;;; The first three commands are supposed to be used using multimedia
+;;; keys.  For this, you have to assign the appropriate keys in your
+;;; `.stumpwmrc'. For example:
+
+;;;   (define-key *top-map*
+;;;               (kbd "XF86AudioRaiseVolume")
+;;;               "pavol-vol+")
+
+;;; `pavol-interactive' can be used if you don't have or don't want to
+;;; use the media keys.  Once called, you can use `j', `k' and `m'
+;;; keys to control the volume and exit the interactive mode using
+;;; `ESC', `RET' or `C-g'.
+
+;;; With `pavol-application-list' you can list the running
+;;; applications that can have their volume controlled by pulseaudio.
+;;; Navigate the menu using `j' and `k' keys and select the desired
+;;; application using `RET'.
+
+;;; Limitations
+;;; -----------
+
+;;; As stated before, pavol is a *very* simple module to control a
+;;; single sink.  So, if you have more than one sink, it'll probably
+;;; fail to control your volume, without any warning.
+
+;;; PulseAudio is a complex system, but pavol will only let you do
+;;; three things:
+
+;;; + Increase volume
+;;; + Decrease volume
+;;; + Mute
+
+;;;; Code:
 
 (defpackage #:pavol
   (:use #:cl))
@@ -179,6 +247,8 @@ muting a sink")
       (mute nil)
       (mute t))
   (show-volume-bar))
+
+;;;; Commands
 
 (stumpwm:defcommand pavol-vol+ () ()
   "Increase the volume by 5 points"
