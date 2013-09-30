@@ -105,11 +105,8 @@ muting a sink")
   index
   volume)
 
-(defun copy-sparse-keymap (sparse-keymap)
-  (stumpwm::copy-kmap sparse-keymap))
-
 (defparameter *pavol-application-list-keymap*
-  (let ((m (copy-sparse-keymap stumpwm::*menu-map*)))
+  (let ((m (stumpwm::copy-kmap stumpwm::*menu-map*)))
     (labels ((dk (k c)
                (stumpwm:define-key m k c)))
       (dk (stumpwm:kbd "j") 'stumpwm::menu-down)
