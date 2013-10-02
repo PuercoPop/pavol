@@ -59,6 +59,8 @@
 ;;; either the command `load-module' or add (load-module "pavol") to
 ;;; your `.stumpwmrc' file.
 
+;;; You can also load it directly, using (load "/path/to/pavol.lisp").
+
 ;;; Limitations
 ;;; -----------
 
