@@ -192,7 +192,7 @@ muting a sink")
 
 (defun set-volume (percentage)
   (if (zerop *pavol-index*)
-      (stumpwm:run-shell-command 
+      (stumpwm:run-shell-command
        (format nil "pacmd set-sink-volume 0 ~a"
                (percentage->integer percentage)))
       (stumpwm:run-shell-command
@@ -234,15 +234,15 @@ muting a sink")
              (format nil "~:[OPEN~;MUTED~]~%~a"
                      (mutep) (make-volume-bar percent)))))
 
-(defun volume-up (percentage) 
+(defun volume-up (percentage)
  (set-volume (min (+ (volume) percentage) 100)))
 
 (defun volume-down (percentage)
   (set-volume (max (- (volume) percentage) 0)))
 
-(defun vol+ (percentage) 
+(defun vol+ (percentage)
  (volume-up percentage)
-  (show-volume-bar))
+ (show-volume-bar))
 
 (defun vol- (percentage)
   (volume-down percentage)
