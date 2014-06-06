@@ -52,13 +52,20 @@
 ;;; Navigate the menu using `j' and `k' keys and select the desired
 ;;; application using `RET'.
 
+;;; Dependencies
+;;; ------------
+
+;;; Pavol is known to work with:
+;;;
+;;; * SBCL 1.1.18
+;;; * PulseAudio 5.0
+
 ;;; Installation
 ;;; ------------
 
-;;; Put this module inside your `contrib/' directory and load it with
-;;; either the command `load-module' or add (load-module "pavol") to
-;;; your `.stumpwmrc' file.
-
+;;; Pavol is an ASDF system, so you should put it where ASDF can find
+;;; and load it with `load-module' or `asdf:load-op'.
+;;;
 ;;; You can also load it directly, using (load "/path/to/pavol.lisp").
 
 ;;; Limitations
