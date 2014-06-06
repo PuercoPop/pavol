@@ -129,14 +129,12 @@ muting a sink")
 
 (defun sink-input-index-index (sink-input-index)
   "The index os a sink input."
-  (ppcre:register-groups-bind (index)
-      ("\\ *index: (\\d*)" sink-input-index)
-    (when index (parse-integer index))))
+  (with-input-from-string (s sink-input-index) (read s)))
 
 (defun sink-input-index-volume (sink-input-index)
   "The volume of a sink input."
   (ppcre:register-groups-bind (volume)
-      ("\\ *volume:\\ *0:\\ *(\\d*)\\ *%" sink-input-index)
+      ("\\s+volume:\\s+front-left:\\s+\\d+\\s+/\\s+(\\d+)%" sink-input-index)
     (when volume (parse-integer volume))))
 
 (defun process-sink-input-index (sink-input-index)
@@ -147,14 +145,16 @@ muting a sink")
    :index (sink-input-index-index sink-input-index)
    :volume (sink-input-index-volume sink-input-index)))
 
+(defun number-of-sink-inputs (raw)
+  (with-input-from-string (s raw) (read s)))
+
 (defun list-sink-inputs ()
-  "A list of the active sink inputs."
-  (let ((sink-inputs nil))
-    (ppcre:do-matches-as-strings
-        (match "(?s:index:.+?(?=index:|>>>))"
-          (stumpwm:run-shell-command "pacmd list-sink-inputs" t))
-      (push (process-sink-input-index match) sink-inputs))
-    sink-inputs))
+  "A list of the sink inputs available."
+  (let* ((r (stumpwm:run-shell-command "pacmd list-sink-inputs" t))
+         (n (number-of-sink-inputs r))
+         (raw-sink-inputs (rest (ppcre:split "\\s+index: " r))))
+    (assert (= n (length raw-sink-inputs)))
+    (mapcar #'process-sink-input-index raw-sink-inputs)))
 
 (defun sink-input->alist (sink-input)
   (cons (concatenate 'string
