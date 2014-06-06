@@ -168,8 +168,9 @@ muting a sink")
 (defun volume ()
   (if (zerop *pavol-index*)
       (ppcre:register-groups-bind (volume)
-          ("volume: 0:(.*?)%" (stumpwm:run-shell-command "pacmd list-sinks"
-                                                         t))
+          ("volume: front-left: [0-9]* / *(.*?)%"
+           (stumpwm:run-shell-command "pacmd list-sinks"
+                                      t))
         (when volume
           (parse-integer volume)))
       (sink-input-volume (find *pavol-index*
