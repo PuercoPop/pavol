@@ -64,7 +64,7 @@
 ;;; ------------
 
 ;;; Pavol is an ASDF system, so you should put it where ASDF can find
-;;; and load it with `load-module' or `asdf:load-op'.
+;;; and load it with `load-module' or `asdf:load-system'.
 ;;;
 ;;; You can also load it directly, using (load "/path/to/pavol.lisp").
 
