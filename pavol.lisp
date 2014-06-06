@@ -1,6 +1,6 @@
 ;;; pavol.lisp --- simple StumpWM module to interact with pulseaudio
 
-;;; Copyright (C) 2012-2013 Diogo F. S. Ramos
+;;; Copyright (C) 2012-2014 Diogo F. S. Ramos
 
 ;;; This program is free software: you can redistribute it and/or
 ;;; modify it under the terms of the GNU General Public License as
