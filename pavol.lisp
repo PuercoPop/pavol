@@ -93,9 +93,8 @@
 
 (defparameter *pavol-max* 65536)
 
-(defvar *pavol-index* 0 "The index used when changing the volume or
-muting a sink")
-
+
+;;;; Keymaps
 (defparameter *pavol-keymap*
   (let ((m (stumpwm:make-sparse-keymap)))
     (labels ((dk (k c)
@@ -108,12 +107,6 @@ muting a sink")
       (dk (stumpwm:kbd "ESC") "pavol-exit-interactive")
       m)))
 
-(defstruct sink-input "A sink input"
-  (mute-p nil)
-  name
-  index
-  volume)
-
 (defparameter *pavol-application-list-keymap*
   (let ((m (stumpwm::copy-kmap stumpwm::*menu-map*)))
     (labels ((dk (k c)
@@ -122,46 +115,155 @@ muting a sink")
       (dk (stumpwm:kbd "k") 'stumpwm::menu-up)
       m)))
 
-(defun sink-input-index-mute-p (sink-input-index)
-  "Is the sink input mute?"
+
+;;;; External command
+(defun pacmd (control-string &rest args)
+  (stumpwm:run-shell-command
+   (apply #'format nil
+          (concatenate 'string "pacmd " control-string) args)
+   t))
+
+
+;;;; Sink
+
+;;; A "sink" is normally the computer speakers
+;;;
+;;; There can be more than one Sink
+
+(defclass sink ()
+  ((index :initarg :index :reader sink-index)))
+
+(defun number-of-sinks (raw) (read-from-string raw))
+
+(defun list-sinks ()
+  (let* ((r (pacmd "list-sinks"))
+         (n (number-of-sinks r))
+         ss)
+    (ppcre:do-register-groups (i) ("\\s+index: (\\d+)" r)
+      (push (make-instance 'sink-input :index i) ss))
+    (assert (= (length ss) n))
+    ss))
+
+(defun default-sink ()
+  (ppcre:register-groups-bind (i) ("(?m:^\\s+[*]\\s+index: (\\d+))"
+                                   (pacmd "list-sinks"))
+    (make-instance 'sink :index i)))
+
+(defun raw-default-sink ()
+  (let ((sinks (pacmd "list-sinks")))
+    (multiple-value-bind (s e) (ppcre:scan "(?m:^\\s+[*]\\s+index:)" sinks)
+      (when s
+        (subseq sinks
+                s
+                (ppcre:scan "(?m:^\\s+index: +\\d+)" sinks :start e))))))
+
+(defun raw-sink-from-index (index)
+  (let ((sinks (pacmd "list-sinks")))
+    (multiple-value-bind (s e)
+        (ppcre:scan (format nil "(?m:^\\s+[*]?\\s+index: +~a\\s+)" index)
+                    sinks)
+      (when s
+        (subseq sinks
+                s
+                (ppcre:scan "(?m:^\\s+[*]?\\s+index: +\\d+\\s+)"
+                            sinks :start e))))))
+
+(defun sink->raw (sink)
+  (or (raw-sink-from-index (sink-index sink))
+      (error "invalid sink")))
+
+(defun sink-volume (sink)
+  (ppcre:register-groups-bind (volume)
+      ("(?m:^\\s+volume: +front-left: +\\d+ +/ +(\\d+)%)" (sink->raw sink))
+    (if (null volume)
+        (error "sink malformed")
+        (values (parse-integer volume)))))
+
+(defun (setf sink-volume) (percentage sink)
+  (assert (<= 0 percentage 100))
+  (pacmd "set-sink-volume ~a ~a"
+         (sink-index sink)
+         (percentage->integer percentage))
+  percentage)
+
+(defun sink-mute-p (sink)
   (ppcre:register-groups-bind (state)
-      ("\\ *muted:\\ *(\\w*)" sink-input-index)
+      ("(?m:^\\s+muted: +(\\w+))"
+       (sink->raw sink))
     (not (string= state "no"))))
 
-(defun sink-input-index-name (sink-input-index)
-  "The application name of the sinput index."
-  (ppcre:register-groups-bind (name)
-      ("\\ *application.name = (.*)" sink-input-index)
-    (subseq name 1 (1- (length name)))))
+(defun (setf sink-mute-p) (state sink)
+  (pacmd "set-sink-mute ~a ~:[0~;1~]" (sink-index sink) state)
+  state)
 
-(defun sink-input-index-index (sink-input-index)
-  "The index os a sink input."
-  (with-input-from-string (s sink-input-index) (read s)))
+
+;;;; Sink Input
 
-(defun sink-input-index-volume (sink-input-index)
-  "The volume of a sink input."
+;;; A sink input is normally a program which is playing some sound.
+
+;;; There can be more than one sink input.
+
+(defclass sink-input ()
+  ((index :initarg :index :reader sink-input-index)))
+
+(defun raw-sink-input-from-index (index)
+  (let ((sink-inputs (pacmd "list-sink-inputs")))
+    (multiple-value-bind (s e)
+        (ppcre:scan (format nil "(?m:^\\s+index: +~a\\s+)" index) sink-inputs)
+      (when s
+        (subseq sink-inputs
+                s
+                (ppcre:scan "(?m:^\\s+index: +\\d+)" sink-inputs :start e))))))
+
+(defun sink-input->raw (sink-input)
+  (or (raw-sink-input-from-index (sink-input-index sink-input))
+      (error "invalid sink")))
+
+(defun sink-input-volume (sink-input)
   (ppcre:register-groups-bind (volume)
-      ("\\s+volume:\\s+front-left:\\s+\\d+\\s+/\\s+(\\d+)%" sink-input-index)
-    (when volume (parse-integer volume))))
+      ("(?m:^\\s+volume: +front-left: +\\d+ +/ +(\\d+)%)"
+       (sink-input->raw sink-input))
+    (if (null volume)
+        (error "sink malformed")
+        (values (parse-integer volume)))))
 
-(defun process-sink-input-index (sink-input-index)
-  "Return a sink input structure from a index returned by pacmd."
-  (make-sink-input
-   :mute-p (sink-input-index-mute-p sink-input-index)
-   :name (sink-input-index-name sink-input-index)
-   :index (sink-input-index-index sink-input-index)
-   :volume (sink-input-index-volume sink-input-index)))
+(defun (setf sink-input-volume) (percentage sink-input)
+  (assert (<= 0 percentage 100))
+  (pacmd "set-sink-input-volume ~a ~a"
+         (sink-input-index sink-input)
+         (percentage->integer percentage))
+  percentage)
 
-(defun number-of-sink-inputs (raw)
-  (with-input-from-string (s raw) (read s)))
+(defun sink-input-mute-p (sink-input)
+  (ppcre:register-groups-bind (state)
+      ("(?m:^\\s+muted: +(\\w+))"
+       (sink-input->raw sink-input))
+    (not (string= state "no"))))
+
+(defun (setf sink-input-mute-p) (state sink-input)
+  (pacmd "set-sink-input-mute ~a ~:[0~;1~]"
+         (sink-input-index sink-input)
+         state)
+  state)
+
+(defun sink-input-name (sink-input)
+  "The application name of the sink input."
+  (ppcre:register-groups-bind (name)
+      ("(?m:^\\s+application.name += +(\".*))"
+       (sink-input->raw sink-input))
+    (when name (read-from-string name))))
+
+(defun number-of-sink-inputs (raw) (read-from-string raw))
 
 (defun list-sink-inputs ()
   "A list of the sink inputs available."
-  (let* ((r (stumpwm:run-shell-command "pacmd list-sink-inputs" t))
+  (let* ((r (pacmd "list-sink-inputs"))
          (n (number-of-sink-inputs r))
-         (raw-sink-inputs (rest (ppcre:split "\\s+index: " r))))
-    (assert (= n (length raw-sink-inputs)))
-    (mapcar #'process-sink-input-index raw-sink-inputs)))
+         ss)
+    (ppcre:do-register-groups (i) ("\\s+index: (\\d+)" r)
+      (push (make-instance 'sink-input :index i) ss))
+    (assert (= (length ss) n))
+    ss))
 
 (defun sink-input->alist (sink-input)
   (cons (concatenate 'string
@@ -172,67 +274,28 @@ muting a sink")
 (defun sink-inputs-selection ()
   (mapcar #'sink-input->alist (list-sink-inputs)))
 
+
+;;;; Default Sink
+
+;;; Functions that deal with the default sink.  This is what the user
+;;; normally wants.
 (defun volume ()
-  (if (zerop *pavol-index*)
-      (ppcre:register-groups-bind (volume)
-          ("volume: front-left: [0-9]* / *(.*?)%"
-           (stumpwm:run-shell-command "pacmd list-sinks"
-                                      t))
-        (when volume
-          (parse-integer volume)))
-      (sink-input-volume (find *pavol-index*
-                               (list-sink-inputs)
-                               :key #'sink-input-index))))
+  (sink-volume (default-sink)))
+
+(defun (setf volume) (percentage)
+  (setf (sink-volume (default-sink)) percentage))
 
 (defun mutep ()
-    (if (zerop *pavol-index*)
-        (ppcre:register-groups-bind (mutep)
-            ("muted: (.*)" (stumpwm:run-shell-command "pacmd list-sinks"
-                                                      t))
-          (when mutep
-            (string= "yes" mutep)))
-        (sink-input-mute-p (find *pavol-index*
-                                 (list-sink-inputs)
-                                 :key #'sink-input-index))))
+  (sink-mute-p (default-sink)))
 
-(defun percentage->integer (percentage)
-  (truncate (* *pavol-max* percentage) 100))
+(defun (setf mutep) (state)
+  (setf (sink-mute-p (default-sink)) state))
 
-(defun set-volume (percentage)
-  (if (zerop *pavol-index*)
-      (stumpwm:run-shell-command
-       (format nil "pacmd set-sink-volume 0 ~a"
-               (percentage->integer percentage)))
-      (stumpwm:run-shell-command
-       (format nil "pacmd set-sink-input-volume ~a ~a"
-               *pavol-index*
-               (percentage->integer percentage)))))
+(defun volume-up (percentage)
+ (setf (volume) (min (+ (volume) percentage) 100)))
 
-(defun mute (state)
-  (if (zerop *pavol-index*)
-      (stumpwm:run-shell-command
-       (format nil "pacmd set-sink-mute 0 ~:[0~;1~]" state))
-      (stumpwm:run-shell-command
-       (format nil
-               "pacmd set-sink-input-mute ~a ~:[0~;1~]"
-               *pavol-index*
-               state))))
-
-(defun set-interactive (&optional (index 0))
-  (setf *pavol-index* index)
-  (stumpwm::push-top-map *pavol-keymap*))
-
-(defun unset-interactive ()
-  (setf *pavol-index* 0)
-  (stumpwm::pop-top-map))
-
-(defun interactivep ()
-  (equal stumpwm:*top-map* *pavol-keymap*))
-
-(defun make-volume-bar (percent)
-  "Return a string that represents a volume bar"
-  (format nil "^B~3d%^b [^[^7*~a^]]"
-          percent (stumpwm::bar percent 50 #\# #\:)))
+(defun volume-down (percentage)
+  (setf (volume) (max (- (volume) percentage) 0)))
 
 (defun show-volume-bar ()
   (let ((percent (volume)))
@@ -241,12 +304,6 @@ muting a sink")
                  #'stumpwm:message)
              (format nil "~:[OPEN~;MUTED~]~%~a"
                      (mutep) (make-volume-bar percent)))))
-
-(defun volume-up (percentage)
- (set-volume (min (+ (volume) percentage) 100)))
-
-(defun volume-down (percentage)
-  (set-volume (max (- (volume) percentage) 0)))
 
 (defun vol+ (percentage)
  (volume-up percentage)
@@ -257,13 +314,30 @@ muting a sink")
   (show-volume-bar))
 
 (defun toggle-mute ()
-  (if (mutep)
-      (mute nil)
-      (mute t))
+  (setf (mutep) (not (mutep)))
   (show-volume-bar))
 
-;;;; Commands
+
+;;;; Utility functions
+(defun percentage->integer (percentage)
+  (truncate (* *pavol-max* percentage) 100))
 
+(defun make-volume-bar (percent)
+  "Return a string that represents a volume bar"
+  (format nil "^B~3d%^b [^[^7*~a^]]"
+          percent (stumpwm::bar percent 50 #\# #\:)))
+
+(defun set-interactive ()
+  (stumpwm::push-top-map *pavol-keymap*))
+
+(defun unset-interactive ()
+  (stumpwm::pop-top-map))
+
+(defun interactivep ()
+  (equal stumpwm:*top-map* *pavol-keymap*))
+
+
+;;;; Commands
 (stumpwm:defcommand pavol-vol+ () ()
   "Increase the volume by 5 points"
   (vol+ 5))
