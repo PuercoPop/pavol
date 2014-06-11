@@ -335,6 +335,23 @@
   (show-volume-bar))
 
 
+;;;; Sink Input Interaction
+(defun vol+-sink-input ()
+  (setf (sink-input-volume *pavol-sink-input*)
+        (min (+ (sink-input-volume *pavol-sink-input*) 5) 100))
+  (show-sink-input-volume-bar))
+
+(defun vol--sink-input ()
+  (setf (sink-input-volume *pavol-sink-input*)
+        (max (- (sink-input-volume *pavol-sink-input*) 5) 0))
+  (show-sink-input-volume-bar))
+
+(defun toggle-mute-sink-input ()
+  (setf (sink-input-mute-p *pavol-sink-input*)
+        (not (sink-input-mute-p *pavol-sink-input*)))
+  (show-sink-input-volume-bar))
+
+
 ;;;; Utility functions
 (defun percentage->integer (percentage)
   (truncate (* *pavol-max* percentage) 100))
@@ -367,21 +384,6 @@
              (format nil "~:[OPEN~;MUTED~]~%~a"
                      (sink-input-mute-p *pavol-sink-input*)
                      (make-volume-bar percent)))))
-
-(defun vol+-sink-input ()
-  (setf (sink-input-volume *pavol-sink-input*)
-        (min (+ (sink-input-volume *pavol-sink-input*) 5) 100))
-  (show-sink-input-volume-bar))
-
-(defun vol--sink-input ()
-  (setf (sink-input-volume *pavol-sink-input*)
-        (max (- (sink-input-volume *pavol-sink-input*) 5) 0))
-  (show-sink-input-volume-bar))
-
-(defun toggle-mute-sink-input ()
-  (setf (sink-input-mute-p *pavol-sink-input*)
-        (not (sink-input-mute-p *pavol-sink-input*)))
-  (show-sink-input-volume-bar))
 
 
 ;;;; Commands
