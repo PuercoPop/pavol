@@ -93,6 +93,8 @@
 
 (defparameter *pavol-max* 65536)
 
+(defvar *pavol-sink-input* nil)
+
 
 ;;;; Keymaps
 (defparameter *pavol-keymap*
@@ -113,6 +115,21 @@
                (stumpwm:define-key m k c)))
       (dk (stumpwm:kbd "j") 'stumpwm::menu-down)
       (dk (stumpwm:kbd "k") 'stumpwm::menu-up)
+      m)))
+
+(defparameter *pavol-application-keymap*
+  (let ((m (stumpwm:make-sparse-keymap)))
+    (labels ((dk (k c)
+               (stumpwm:define-key m k c)))
+      (dk (stumpwm:kbd "j") "pavol--sink-input pavol::vol--sink-input")
+      (dk (stumpwm:kbd "k") "pavol--sink-input pavol::vol+-sink-input")
+      (dk (stumpwm:kbd "m") "pavol--sink-input pavol::toggle-mute-sink-input")
+      (dk (stumpwm:kbd "RET")
+          "pavol--sink-input pavol::unset-interactive-sink-input")
+      (dk (stumpwm:kbd "C-g")
+          "pavol--sink-input pavol::unset-interactive-sink-input")
+      (dk (stumpwm:kbd "ESC")
+          "pavol--sink-input pavol::unset-interactive-sink-input")
       m)))
 
 
@@ -336,6 +353,36 @@
 (defun interactivep ()
   (equal stumpwm:*top-map* *pavol-keymap*))
 
+(defun set-interactive-sink-input (sink-input)
+  (setf *pavol-sink-input* sink-input)
+  (stumpwm::push-top-map *pavol-application-keymap*))
+
+(defun unset-interactive-sink-input ()
+  (setf *pavol-sink-input* nil)
+  (stumpwm::pop-top-map))
+
+(defun show-sink-input-volume-bar ()
+  (let ((percent (sink-input-volume *pavol-sink-input*)))
+    (funcall #'stumpwm::message-no-timeout
+             (format nil "~:[OPEN~;MUTED~]~%~a"
+                     (sink-input-mute-p *pavol-sink-input*)
+                     (make-volume-bar percent)))))
+
+(defun vol+-sink-input ()
+  (setf (sink-input-volume *pavol-sink-input*)
+        (min (+ (sink-input-volume *pavol-sink-input*) 5) 100))
+  (show-sink-input-volume-bar))
+
+(defun vol--sink-input ()
+  (setf (sink-input-volume *pavol-sink-input*)
+        (max (- (sink-input-volume *pavol-sink-input*) 5) 0))
+  (show-sink-input-volume-bar))
+
+(defun toggle-mute-sink-input ()
+  (setf (sink-input-mute-p *pavol-sink-input*)
+        (not (sink-input-mute-p *pavol-sink-input*)))
+  (show-sink-input-volume-bar))
+
 
 ;;;; Commands
 (stumpwm:defcommand pavol-vol+ () ()
@@ -370,5 +417,9 @@ They are actually input sinks in pulseaudio's terminology."
                (sink (stumpwm::select-from-menu (stumpwm:current-screen)
                                                 sinks)))
           (when sink
-            (set-interactive (sink-input-index (cdr sink)))
-            (show-volume-bar))))))
+            (set-interactive-sink-input (cdr sink))
+            (show-sink-input-volume-bar))))))
+
+(stumpwm:defcommand pavol--sink-input (fn)
+    ((:function "you shouldn't be using this "))
+  (funcall fn))
