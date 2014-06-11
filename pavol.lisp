@@ -309,7 +309,7 @@
   (setf (sink-mute-p (default-sink)) state))
 
 (defun volume-up (percentage)
- (setf (volume) (min (+ (volume) percentage) 100)))
+  (setf (volume) (min (+ (volume) percentage) 100)))
 
 (defun volume-down (percentage)
   (setf (volume) (max (- (volume) percentage) 0)))
@@ -323,8 +323,8 @@
                      (mutep) (make-volume-bar percent)))))
 
 (defun vol+ (percentage)
- (volume-up percentage)
- (show-volume-bar))
+  (volume-up percentage)
+  (show-volume-bar))
 
 (defun vol- (percentage)
   (volume-down percentage)
