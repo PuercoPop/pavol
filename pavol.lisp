@@ -110,7 +110,7 @@
       m)))
 
 (defparameter *pavol-application-list-keymap*
-  (let ((m (stumpwm::copy-kmap stumpwm::*menu-map*)))
+  (let ((m (stumpwm:make-sparse-keymap)))
     (labels ((dk (k c)
                (stumpwm:define-key m k c)))
       (dk (stumpwm:kbd "j") 'stumpwm::menu-down)
@@ -415,9 +415,10 @@ They are actually input sinks in pulseaudio's terminology."
   (let ((sinks (sink-inputs-selection)))
     (if (null sinks)
         (stumpwm:message "No application is running")
-        (let* ((stumpwm::*menu-map* *pavol-application-list-keymap*)
-               (sink (stumpwm::select-from-menu (stumpwm:current-screen)
-                                                sinks)))
+        (let ((sink
+               (stumpwm::select-from-menu (stumpwm:current-screen)
+                                          sinks nil 0
+                                          *pavol-application-list-keymap*)))
           (when sink
             (set-interactive-sink-input (cdr sink))
             (show-sink-input-volume-bar))))))
