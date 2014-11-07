@@ -150,7 +150,10 @@
 (defclass sink ()
   ((index :initarg :index :reader sink-index)))
 
-(defun number-of-sinks (raw) (read-from-string raw))
+(defun number-of-sinks (raw)
+  (ppcre:register-groups-bind ((#'parse-integer n))
+      (">>>\\s+(\\d+)" raw)
+    n))
 
 (defun list-sinks ()
   (let* ((r (pacmd "list-sinks"))
@@ -270,7 +273,10 @@
        (sink-input->raw sink-input))
     (when name (read-from-string name))))
 
-(defun number-of-sink-inputs (raw) (read-from-string raw))
+(defun number-of-sink-inputs (raw)
+  (ppcre:register-groups-bind ((#'parse-integer n))
+      (">>>\\s+(\\d+)" raw)
+    n))
 
 (defun list-sink-inputs ()
   "A list of the sink inputs available."
