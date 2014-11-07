@@ -193,11 +193,11 @@
       (error "invalid sink")))
 
 (defun sink-volume (sink)
-  (ppcre:register-groups-bind (volume)
-      ("(?m:^\\s+volume: +front-left: +\\d+ +/ +(\\d+)%)" (sink->raw sink))
+  (ppcre:register-groups-bind ((#'parse-integer volume))
+      ("(?m:^\\s+volume: +\\d+: +(\\d+)%)" (sink->raw sink))
     (if (null volume)
         (error "sink malformed")
-        (values (parse-integer volume)))))
+        volume)))
 
 (defun (setf sink-volume) (percentage sink)
   (assert (<= 0 percentage 100))
@@ -240,12 +240,12 @@
       (error "invalid sink")))
 
 (defun sink-input-volume (sink-input)
-  (ppcre:register-groups-bind (volume)
+  (ppcre:register-groups-bind ((#'parse-integer volume))
       ("(?m:^\\s+volume: +front-left: +\\d+ +/ +(\\d+)%)"
        (sink-input->raw sink-input))
     (if (null volume)
         (error "sink malformed")
-        (values (parse-integer volume)))))
+        volume)))
 
 (defun (setf sink-input-volume) (percentage sink-input)
   (assert (<= 0 percentage 100))
