@@ -393,28 +393,31 @@
 
 
 ;;;; Commands
-(stumpwm:defcommand pavol-vol+ () ()
+
+(import 'defcommand "STUMPWM")
+
+(defcommand pavol-vol+ () ()
   "Increase the volume by 5 points"
   (vol+ 5))
 
-(stumpwm:defcommand pavol-vol- () ()
+(defcommand pavol-vol- () ()
   "Decrease the volume by 5 points"
   (vol- 5))
 
-(stumpwm:defcommand pavol-toggle-mute () ()
+(defcommand pavol-toggle-mute () ()
   "Toggle mute"
   (toggle-mute))
 
-(stumpwm:defcommand pavol-exit-interactive () ()
+(defcommand pavol-exit-interactive () ()
   "Exit the interactive mode for changing the volume"
   (unset-interactive))
 
-(stumpwm:defcommand pavol-interactive () ()
+(defcommand pavol-interactive () ()
   "Change the volume interactively using `j', `k' and `m' keys"
   (set-interactive)
   (show-volume-bar))
 
-(stumpwm:defcommand pavol-application-list () ()
+(defcommand pavol-application-list () ()
   "Give the ability to control independent applications.
 
 They are actually input sinks in pulseaudio's terminology."
@@ -429,6 +432,6 @@ They are actually input sinks in pulseaudio's terminology."
             (set-interactive-sink-input (cdr sink))
             (show-sink-input-volume-bar))))))
 
-(stumpwm:defcommand pavol--sink-input (fn)
+(defcommand pavol--sink-input (fn)
     ((:function "you shouldn't be using this "))
   (funcall fn))
