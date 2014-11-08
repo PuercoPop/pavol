@@ -255,7 +255,7 @@ This is a heuristic."
 
 (defun sink-input-volume (sink-input)
   (ppcre:register-groups-bind ((#'parse-integer volume))
-      ("(?m:^\\s+volume: +front-left: +\\d+ +/ +(\\d+)%)"
+      ("(?m:^\\s+volume: +\\d+: +(\\d+)%)"
        (sink-input->raw sink-input))
     (if (null volume)
         (error "sink malformed")
