@@ -33,6 +33,7 @@
 ;;; + pavol-interactive
 ;;; + pavol-exit-interactive
 ;;; + pavol-application-list
+;;; + pavol-normalize-sink-inputs
 
 ;;; The first three commands are supposed to be used using multimedia
 ;;; keys.  For this, you have to assign the appropriate keys in your
