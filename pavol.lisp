@@ -164,10 +164,24 @@
     (assert (= (length ss) n))
     ss))
 
-(defun default-sink ()
-  (ppcre:register-groups-bind (i) ("(?m:^\\s+[*]\\s+index: (\\d+))"
-                                   (pacmd "list-sinks"))
+(defun marked-default-sink-p (&optional pacmd-sink-list)
+  "The sink marked with `*'."
+  (ppcre:register-groups-bind (i)
+      ("(?m:^\\s+[*]\\s+index: (\\d+))"
+       (or pacmd-sink-list (pacmd "list-sinks")))
     (make-instance 'sink :index i)))
+
+(defun default-sink ()
+  "The default sink to operate on.
+
+This is a heuristic."
+  ;; A sink marked by `*' is considered the default.  If there is
+  ;; none, the first sink encountered is returned.
+  (let ((sink-list (pacmd "list-sinks")))
+    (or (marked-default-sink-p sink-list)
+        (ppcre:register-groups-bind (i)
+            ("(?m:^\\s+index: (\\d+))" sink-list)
+          (make-instance 'sink :index i)))))
 
 (defun raw-default-sink ()
   (let ((sinks (pacmd "list-sinks")))
