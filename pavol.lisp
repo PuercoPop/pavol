@@ -58,7 +58,10 @@
 ;;; Pavol is known to work with:
 ;;;
 ;;; * SBCL 1.1.18
-;;; * PulseAudio 5.0
+;;; * pacmd 2.0
+;;;
+;;; pacmd version is the most important because the output of the
+;;; command might change from version to version.
 
 ;;; Installation
 ;;; ------------
@@ -81,6 +84,9 @@
 ;;; + Increase volume
 ;;; + Decrease volume
 ;;; + Mute
+
+;;; Also, by relying on a command line tool, pavol is sensible to
+;;; output changes from the tool.
 
 ;;;; Code:
 
