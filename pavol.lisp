@@ -455,3 +455,9 @@ They are actually input sinks in pulseaudio's terminology."
 (defcommand pavol--sink-input (fn)
     ((:function "you shouldn't be using this "))
   (funcall fn))
+
+(defcommand pavol-normalize-sink-inputs () ()
+  "Set all sink inputs to the volume of the default sink."
+  (let ((volume (volume)))
+    (dolist (sink-input (list-sink-inputs))
+      (setf (sink-input-volume sink-input) volume))))
