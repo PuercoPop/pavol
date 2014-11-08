@@ -92,7 +92,8 @@
 ;;;; Code:
 
 (defpackage #:pavol
-  (:use #:cl))
+  (:use #:cl)
+  (:import-from #:stumpwm #:defcommand))
 
 (in-package #:pavol)
 
@@ -414,9 +415,6 @@ This is a heuristic."
 
 
 ;;;; Commands
-
-(import 'defcommand "STUMPWM")
-
 (defcommand pavol-vol+ () ()
   "Increase the volume by 5 points"
   (vol+ 5))
