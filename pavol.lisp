@@ -296,19 +296,22 @@ This is a heuristic."
     (when name (read-from-string name))))
 
 (defun number-of-sink-inputs (raw)
-  (ppcre:register-groups-bind ((#'parse-integer n))
-      (">>>\\s+(\\d+)" raw)
-    n))
+  (or
+   (ppcre:register-groups-bind ((#'parse-integer n))
+       (">>>\\s+(\\d+)" raw)
+     n)
+   0))
 
 (defun list-sink-inputs ()
   "A list of the sink inputs available."
   (let* ((r (pacmd "list-sink-inputs"))
          (n (number-of-sink-inputs r))
          ss)
-    (ppcre:do-register-groups (i) ("\\s+index: (\\d+)" r)
-      (push (make-instance 'sink-input :index i) ss))
-    (assert (= (length ss) n))
-    ss))
+    (cond ((zerop n) nil)
+          (t (ppcre:do-register-groups (i) ("\\s+index: (\\d+)" r)
+               (push (make-instance 'sink-input :index i) ss))
+             (assert (= (length ss) n))
+             ss))))
 
 (defun sink-input->alist (sink-input)
   (cons (concatenate 'string
