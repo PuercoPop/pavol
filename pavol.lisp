@@ -443,11 +443,15 @@ This is a heuristic."
 
 (defcommand pavol-interactive () ()
   "Change the volume interactively using `j', `k' and `m' keys"
-  (unwind-protect
-       (progn
-         (set-interactive)
-         (show-volume-bar))
-    (pavol-exit-interactive)))
+  (let ((everything-ok nil))
+    ;; If something goes wrong -- e.g. there is no default sink -- I
+    ;; have to exit the interactive session.
+    (unwind-protect
+         (progn (set-interactive)
+                (show-volume-bar)
+                (setf everything-ok t))
+      (unless everything-ok
+        (pavol-exit-interactive)))))
 
 (defcommand pavol-application-list () ()
   "Give the ability to control independent applications.
