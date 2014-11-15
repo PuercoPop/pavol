@@ -443,8 +443,11 @@ This is a heuristic."
 
 (defcommand pavol-interactive () ()
   "Change the volume interactively using `j', `k' and `m' keys"
-  (set-interactive)
-  (show-volume-bar))
+  (unwind-protect
+       (progn
+         (set-interactive)
+         (show-volume-bar))
+    (pavol-exit-interactive)))
 
 (defcommand pavol-application-list () ()
   "Give the ability to control independent applications.
