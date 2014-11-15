@@ -179,17 +179,24 @@
        (or pacmd-sink-list (pacmd "list-sinks")))
     (make-instance 'sink :index i)))
 
+(define-condition missing-default-sink (error)
+  ()
+  (:documentation "The default sink can't be determined.")
+  (:report "Missing default sink (are you sure pulseaudio is running?)"))
+
 (defun default-sink ()
   "The default sink to operate on.
 
 This is a heuristic."
   ;; A sink marked by `*' is considered the default.  If there is
   ;; none, the first sink encountered is returned.
-  (let ((sink-list (pacmd "list-sinks")))
-    (or (marked-default-sink-p sink-list)
-        (ppcre:register-groups-bind (i)
-            ("(?m:^\\s+index: (\\d+))" sink-list)
-          (make-instance 'sink :index i)))))
+  (let* ((sink-list (pacmd "list-sinks"))
+         (sink (or (marked-default-sink-p sink-list)
+                   (ppcre:register-groups-bind (i)
+                       ("(?m:^\\s+index: (\\d+))" sink-list)
+                     (make-instance 'sink :index i)))))
+    (or sink
+        (error 'missing-default-sink))))
 
 (defun raw-default-sink ()
   (let ((sinks (pacmd "list-sinks")))
