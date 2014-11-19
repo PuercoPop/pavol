@@ -82,8 +82,8 @@
 ;;; -----------
 
 ;;; As stated before, pavol is a *very* simple module to control a
-;;; single sink.  So, if you have more than one sink, it'll probably
-;;; fail to control your volume, without any warning.
+;;; single sink.  So, if you have more than one sink, it might change
+;;; the wrong one.
 
 ;;; PulseAudio is a complex system, but pavol will only let you do
 ;;; three things:
