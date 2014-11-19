@@ -384,7 +384,9 @@ This is a heuristic."
 
 (defun unset-interactive ()
   (setf *sink* nil)
-  (stumpwm::pop-top-map))
+  (if (not (interactivep))
+      (warn "Interactive is no active.  Did you accidentally tried to exit it?")
+    (stumpwm::pop-top-map)))
 
 (defun interactivep ()
   (equal stumpwm:*top-map* *interactive-keymap*))
