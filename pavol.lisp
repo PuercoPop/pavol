@@ -103,7 +103,9 @@
 
 ;;; "pavol" goes here. Hacks and glory await!
 
-(defparameter *pavol-max* 65536)
+(defparameter *normal-volume* 65536
+  ;; The name comes from pulseaudio.
+  "The maximum value allowed to a volume in pavol.")
 
 (defvar *pavol-sink-input* nil)
 
@@ -396,7 +398,7 @@ This is a heuristic."
 
 ;;;; Utility functions
 (defun percentage->integer (percentage)
-  (truncate (* *pavol-max* percentage) 100))
+  (truncate (* *normal-volume* percentage) 100))
 
 (defun make-volume-bar (percent)
   "Return a string that represents a volume bar"
