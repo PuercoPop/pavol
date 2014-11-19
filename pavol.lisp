@@ -57,6 +57,8 @@
 ;;; all over the place.  Use `pavol-normalize-sink-inputs' to bring
 ;;; all of them to the same level of the default sink.
 
+;;; Finally, `pavol-exit-interactive' is a hack to restore the keymap.
+
 ;;; Dependencies
 ;;; ------------
 
