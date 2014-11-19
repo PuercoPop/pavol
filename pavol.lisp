@@ -53,6 +53,10 @@
 ;;; Navigate the menu using `j' and `k' keys and select the desired
 ;;; application using `RET'.
 
+;;; After changing volumes of applications for a while, they might be
+;;; all over the place.  Use `pavol-normalize-sink-inputs' to bring
+;;; all of them to the same level of the default sink.
+
 ;;; Dependencies
 ;;; ------------
 
