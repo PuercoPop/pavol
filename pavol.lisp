@@ -323,9 +323,9 @@ This is a heuristic."
              ss))))
 
 (defun sink-input->alist (sink-input)
-  (cons (concatenate 'string
-                     (sink-input-name sink-input) " "
-                     (make-volume-bar (volume sink-input)))
+  (cons (format nil "~A ~A"
+                (sink-input-name sink-input)
+                (make-volume-bar (volume sink-input)))
         sink-input))
 
 (defun sink-inputs-selection ()
