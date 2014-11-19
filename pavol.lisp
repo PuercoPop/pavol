@@ -114,7 +114,7 @@ It is used to make interactive operations possible.")
 
 
 ;;;; Keymaps
-(defparameter *pavol-keymap*
+(defparameter *interactive-keymap*
   (let ((m (stumpwm:make-sparse-keymap)))
     (labels ((dk (k c)
                (stumpwm:define-key m k c)))
@@ -126,7 +126,7 @@ It is used to make interactive operations possible.")
       (dk (stumpwm:kbd "ESC") "pavol-exit-interactive")
       m)))
 
-(defparameter *pavol-application-list-keymap*
+(defparameter *application-list-keymap*
   (let ((m (stumpwm:make-sparse-keymap)))
     (labels ((dk (k c)
                (stumpwm:define-key m k c)))
@@ -378,14 +378,14 @@ This is a heuristic."
 
 (defun set-interactive (&optional sink)
   (setf *sink* sink)
-  (stumpwm::push-top-map *pavol-keymap*))
+  (stumpwm::push-top-map *interactive-keymap*))
 
 (defun unset-interactive ()
   (setf *sink* nil)
   (stumpwm::pop-top-map))
 
 (defun interactivep ()
-  (equal stumpwm:*top-map* *pavol-keymap*))
+  (equal stumpwm:*top-map* *interactive-keymap*))
 
 
 ;;;; Commands
@@ -427,7 +427,7 @@ They are actually input sinks in pulseaudio's terminology."
         (let ((sink
                (stumpwm::select-from-menu (stumpwm:current-screen)
                                           sinks nil 0
-                                          *pavol-application-list-keymap*)))
+                                          *application-list-keymap*)))
           (when sink
             (set-interactive (cdr sink))
             (show-volume-bar (cdr sink)))))))
