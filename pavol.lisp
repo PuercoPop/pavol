@@ -107,7 +107,10 @@
   ;; The name comes from pulseaudio.
   "The maximum value allowed to a volume in pavol.")
 
-(defvar *pavol-sink-input* nil)
+(defvar *sink* nil
+  "Current sink input.
+
+It is used to make interactive operations possible.")
 
 
 ;;;; Keymaps
@@ -131,21 +134,6 @@
       (dk (stumpwm:kbd "k") 'stumpwm::menu-up)
       m)))
 
-(defparameter *pavol-application-keymap*
-  (let ((m (stumpwm:make-sparse-keymap)))
-    (labels ((dk (k c)
-               (stumpwm:define-key m k c)))
-      (dk (stumpwm:kbd "j") "pavol--sink-input pavol::vol--sink-input")
-      (dk (stumpwm:kbd "k") "pavol--sink-input pavol::vol+-sink-input")
-      (dk (stumpwm:kbd "m") "pavol--sink-input pavol::toggle-mute-sink-input")
-      (dk (stumpwm:kbd "RET")
-          "pavol--sink-input pavol::unset-interactive-sink-input")
-      (dk (stumpwm:kbd "C-g")
-          "pavol--sink-input pavol::unset-interactive-sink-input")
-      (dk (stumpwm:kbd "ESC")
-          "pavol--sink-input pavol::unset-interactive-sink-input")
-      m)))
-
 
 ;;;; External command
 (defun pacmd (control-string &rest args)
@@ -153,6 +141,20 @@
    (apply #'format nil
           (concatenate 'string "pacmd " control-string) args)
    t))
+
+
+;;;; Generics
+(defgeneric volume (sink)
+  (:documentation "The SINK volume."))
+
+(defgeneric (setf volume) (percentage sink)
+  (:documentation "Set the volume of SINK to PERCENTAGE."))
+
+(defgeneric mute-p (sink)
+  (:documentation "Is SINK mute?"))
+
+(defgeneric (setf mute-p) (mute sink)
+  (:documentation "Mute SINK."))
 
 
 ;;;; Sink
@@ -219,27 +221,27 @@ This is a heuristic."
   (or (raw-sink-from-index (sink-index sink))
       (error "invalid sink")))
 
-(defun sink-volume (sink)
+(defmethod volume ((sink sink))
   (ppcre:register-groups-bind ((#'parse-integer volume))
       ("(?m:^\\s+volume: +\\d+: +(\\d+)%)" (sink->raw sink))
     (if (null volume)
         (error "sink malformed")
-        volume)))
+      volume)))
 
-(defun (setf sink-volume) (percentage sink)
+(defmethod (setf volume) (percentage (sink sink))
   (assert (<= 0 percentage 100))
   (pacmd "set-sink-volume ~a ~a"
          (sink-index sink)
          (percentage->integer percentage))
   percentage)
 
-(defun sink-mute-p (sink)
+(defmethod mute-p ((sink sink))
   (ppcre:register-groups-bind (state)
       ("(?m:^\\s+muted: +(\\w+))"
        (sink->raw sink))
     (not (string= state "no"))))
 
-(defun (setf sink-mute-p) (state sink)
+(defmethod (setf mute-p) (state (sink sink))
   (pacmd "set-sink-mute ~a ~:[0~;1~]" (sink-index sink) state)
   state)
 
@@ -266,28 +268,28 @@ This is a heuristic."
   (or (raw-sink-input-from-index (sink-input-index sink-input))
       (error "invalid sink")))
 
-(defun sink-input-volume (sink-input)
+(defmethod volume ((sink-input sink-input))
   (ppcre:register-groups-bind ((#'parse-integer volume))
       ("(?m:^\\s+volume: +\\d+: +(\\d+)%)"
        (sink-input->raw sink-input))
     (if (null volume)
         (error "sink malformed")
-        volume)))
+      volume)))
 
-(defun (setf sink-input-volume) (percentage sink-input)
+(defmethod (setf volume) (percentage (sink-input sink-input))
   (assert (<= 0 percentage 100))
   (pacmd "set-sink-input-volume ~a ~a"
          (sink-input-index sink-input)
          (percentage->integer percentage))
   percentage)
 
-(defun sink-input-mute-p (sink-input)
+(defmethod mute-p ((sink-input sink-input))
   (ppcre:register-groups-bind (state)
       ("(?m:^\\s+muted: +(\\w+))"
        (sink-input->raw sink-input))
     (not (string= state "no"))))
 
-(defun (setf sink-input-mute-p) (state sink-input)
+(defmethod (setf mute-p) (state (sink-input sink-input))
   (pacmd "set-sink-input-mute ~a ~:[0~;1~]"
          (sink-input-index sink-input)
          state)
@@ -321,71 +323,48 @@ This is a heuristic."
 (defun sink-input->alist (sink-input)
   (cons (concatenate 'string
                      (sink-input-name sink-input) " "
-                     (make-volume-bar (sink-input-volume sink-input)))
+                     (make-volume-bar (volume sink-input)))
         sink-input))
 
 (defun sink-inputs-selection ()
   (mapcar #'sink-input->alist (list-sink-inputs)))
 
 
-;;;; Default Sink
+;;;; Generic sink functions
+(defun volume-up (sink percentage)
+  (setf (volume sink) (min (+ (volume sink) percentage) 100)))
 
-;;; Functions that deal with the default sink.  This is what the user
-;;; normally wants.
-(defun volume ()
-  (sink-volume (default-sink)))
+(defun volume-down (sink percentage)
+  (setf (volume sink) (max (- (volume sink) percentage) 0)))
 
-(defun (setf volume) (percentage)
-  (setf (sink-volume (default-sink)) percentage))
-
-(defun mutep ()
-  (sink-mute-p (default-sink)))
-
-(defun (setf mutep) (state)
-  (setf (sink-mute-p (default-sink)) state))
-
-(defun volume-up (percentage)
-  (setf (volume) (min (+ (volume) percentage) 100)))
-
-(defun volume-down (percentage)
-  (setf (volume) (max (- (volume) percentage) 0)))
-
-(defun show-volume-bar ()
-  (let ((percent (volume)))
+(defun show-volume-bar (sink)
+  (let ((percent (volume sink)))
     (funcall (if (interactivep)
                  #'stumpwm::message-no-timeout
                  #'stumpwm:message)
              (format nil "~:[OPEN~;MUTED~]~%~a"
-                     (mutep) (make-volume-bar percent)))))
-
-(defun vol+ (percentage)
-  (volume-up percentage)
-  (show-volume-bar))
-
-(defun vol- (percentage)
-  (volume-down percentage)
-  (show-volume-bar))
-
-(defun toggle-mute ()
-  (setf (mutep) (not (mutep)))
-  (show-volume-bar))
+                     (mute-p sink) (make-volume-bar percent)))))
 
 
-;;;; Sink Input Interaction
-(defun vol+-sink-input ()
-  (setf (sink-input-volume *pavol-sink-input*)
-        (min (+ (sink-input-volume *pavol-sink-input*) 5) 100))
-  (show-sink-input-volume-bar))
+;;;; Interface function
+(defun current-sink ()
+  "Current sink for interactive use."
+  (or *sink* (default-sink)))
 
-(defun vol--sink-input ()
-  (setf (sink-input-volume *pavol-sink-input*)
-        (max (- (sink-input-volume *pavol-sink-input*) 5) 0))
-  (show-sink-input-volume-bar))
+(defun vol+ (percentage)
+  (let ((sink (current-sink)))
+    (volume-up sink percentage)
+    (show-volume-bar sink)))
 
-(defun toggle-mute-sink-input ()
-  (setf (sink-input-mute-p *pavol-sink-input*)
-        (not (sink-input-mute-p *pavol-sink-input*)))
-  (show-sink-input-volume-bar))
+(defun vol- (percentage)
+  (let ((sink (current-sink)))
+    (volume-down sink percentage)
+    (show-volume-bar sink)))
+
+(defun toggle-mute ()
+  (let ((sink (current-sink)))
+    (setf (mute-p sink) (not (mute-p sink)))
+    (show-volume-bar sink)))
 
 
 ;;;; Utility functions
@@ -397,29 +376,16 @@ This is a heuristic."
   (format nil "^B~3d%^b [^[^7*~a^]]"
           percent (stumpwm::bar percent 50 #\# #\:)))
 
-(defun set-interactive ()
+(defun set-interactive (&optional sink)
+  (setf *sink* sink)
   (stumpwm::push-top-map *pavol-keymap*))
 
 (defun unset-interactive ()
+  (setf *sink* nil)
   (stumpwm::pop-top-map))
 
 (defun interactivep ()
   (equal stumpwm:*top-map* *pavol-keymap*))
-
-(defun set-interactive-sink-input (sink-input)
-  (setf *pavol-sink-input* sink-input)
-  (stumpwm::push-top-map *pavol-application-keymap*))
-
-(defun unset-interactive-sink-input ()
-  (setf *pavol-sink-input* nil)
-  (stumpwm::pop-top-map))
-
-(defun show-sink-input-volume-bar ()
-  (let ((percent (sink-input-volume *pavol-sink-input*)))
-    (funcall #'stumpwm::message-no-timeout
-             (format nil "~:[OPEN~;MUTED~]~%~a"
-                     (sink-input-mute-p *pavol-sink-input*)
-                     (make-volume-bar percent)))))
 
 
 ;;;; Commands
@@ -446,7 +412,7 @@ This is a heuristic."
     ;; have to exit the interactive session.
     (unwind-protect
          (progn (set-interactive)
-                (show-volume-bar)
+                (show-volume-bar (current-sink))
                 (setf everything-ok t))
       (unless everything-ok
         (pavol-exit-interactive)))))
@@ -463,15 +429,11 @@ They are actually input sinks in pulseaudio's terminology."
                                           sinks nil 0
                                           *pavol-application-list-keymap*)))
           (when sink
-            (set-interactive-sink-input (cdr sink))
-            (show-sink-input-volume-bar))))))
-
-(defcommand pavol--sink-input (fn)
-    ((:function "you shouldn't be using this "))
-  (funcall fn))
+            (set-interactive (cdr sink))
+            (show-volume-bar (cdr sink)))))))
 
 (defcommand pavol-normalize-sink-inputs () ()
   "Set all sink inputs to the volume of the default sink."
-  (let ((volume (volume)))
+  (let ((volume (volume (default-sink))))
     (dolist (sink-input (list-sink-inputs))
-      (setf (sink-input-volume sink-input) volume))))
+      (setf (volume sink-input) volume))))
