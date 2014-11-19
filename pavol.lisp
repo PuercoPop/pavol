@@ -204,14 +204,6 @@ This is a heuristic."
     (or sink
         (error 'missing-default-sink))))
 
-(defun raw-default-sink ()
-  (let ((sinks (pacmd "list-sinks")))
-    (multiple-value-bind (s e) (ppcre:scan "(?m:^\\s+[*]\\s+index:)" sinks)
-      (when s
-        (subseq sinks
-                s
-                (ppcre:scan "(?m:^\\s+index: +\\d+)" sinks :start e))))))
-
 (defun raw-sink-from-index (index)
   (let ((sinks (pacmd "list-sinks")))
     (multiple-value-bind (s e)
